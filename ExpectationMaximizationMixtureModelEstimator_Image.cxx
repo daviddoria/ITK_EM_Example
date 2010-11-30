@@ -19,11 +19,17 @@ void RandomImage(ImageType::Pointer image);
 
 int main(int argc, char*argv[])
 {
+  if( argc != 2 )
+    {
+    std::cout <<"1 argument: number of iteration" <<std::endl;
+    return EXIT_FAILURE;
+    }
+  int iterations = atoi( argv[1] );
 
   ImageType::Pointer image = ImageType::New();
 
-  RandomImage(image);
-  //ControlledImage(image);
+  //RandomImage(image);
+  ControlledImage(image);
 
   typedef itk::Statistics::ImageToListSampleFilter<ImageType> ImageToListSampleFilterType;
   ImageToListSampleFilterType::Pointer imageToListSampleFilter = ImageToListSampleFilterType::New();
@@ -131,7 +137,7 @@ int main(int argc, char*argv[])
   EstimatorType::Pointer estimator = EstimatorType::New();
 
   estimator->SetSample( imageToListSampleFilter->GetOutput() );
-  estimator->SetMaximumIteration( 200 );
+  estimator->SetMaximumIteration( iterations );
 
   itk::Array< double > initialProportions(numberOfClasses);
   initialProportions[0] = 0.33;
