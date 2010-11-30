@@ -9,31 +9,32 @@
 #include "itkImageRegionIterator.h"
 #include "itkImageFileReader.h"
 #include "itkSimpleFilterWatcher.h"
- 
+#include "vnl/vnl_random.h"
+
 typedef itk::CovariantVector<unsigned char, 3> PixelType;
 typedef itk::Image<PixelType, 2>  ImageType;
- 
+
 void ControlledImage(ImageType::Pointer image);
 void RandomImage(ImageType::Pointer image);
- 
+
 int main(int argc, char*argv[])
 {
- 
+
   ImageType::Pointer image = ImageType::New();
- 
+
   RandomImage(image);
   //ControlledImage(image);
- 
+
   typedef itk::Statistics::ImageToListSampleFilter<ImageType> ImageToListSampleFilterType;
   ImageToListSampleFilterType::Pointer imageToListSampleFilter = ImageToListSampleFilterType::New();
   imageToListSampleFilter->SetInput(image);
   imageToListSampleFilter->Update();
- 
+
   unsigned int numberOfClasses = 3;
- 
+
   typedef itk::Array< double > ParametersType;
   ParametersType params( numberOfClasses + numberOfClasses*numberOfClasses ); // 3 for means and 9 for 3x3 covariance
- 
+
   // Create the first set (for the first cluster/model) of initial parameters
   std::vector< ParametersType > initialParameters( numberOfClasses );
   for(unsigned int i = 0; i < 3; i++)
@@ -56,10 +57,10 @@ int main(int argc, char*argv[])
       counter++;
       }
     }
- 
- 
+
+
   initialParameters[0] = params;
- 
+
   // Create the second set (for the second cluster/model) of initial parameters
   params[0] = 210.0;
   params[1] = 5.0;
@@ -81,7 +82,7 @@ int main(int argc, char*argv[])
       }
     }
   initialParameters[1] = params;
- 
+
   // Create the third set (for the third cluster/model) of initial parameters
   params[0] = 5.0;
   params[1] = 210.0;
@@ -103,18 +104,18 @@ int main(int argc, char*argv[])
       }
     }
   initialParameters[2] = params;
- 
+
   std::cout << "Initial parameters: " << std::endl;
   for ( unsigned int i = 0 ; i < numberOfClasses ; i++ )
     {
     std::cout << initialParameters[i] << std::endl;
     }
- 
+
   typedef itk::Statistics::GaussianMixtureModelComponent< ImageToListSampleFilterType::ListSampleType >
     ComponentType;
- 
+
   std::cout << "Number of samples: " << imageToListSampleFilter->GetOutput()->GetTotalFrequency() << std::endl;
- 
+
   // Create the components
   std::vector< ComponentType::Pointer > components;
   for ( unsigned int i = 0 ; i < numberOfClasses ; i++ )
@@ -123,31 +124,31 @@ int main(int argc, char*argv[])
     (components[i])->SetSample( imageToListSampleFilter->GetOutput() );
     (components[i])->SetParameters( initialParameters[i] );
     }
- 
- 
+
+
   typedef itk::Statistics::ExpectationMaximizationMixtureModelEstimator<
                            ImageToListSampleFilterType::ListSampleType > EstimatorType;
   EstimatorType::Pointer estimator = EstimatorType::New();
- 
+
   estimator->SetSample( imageToListSampleFilter->GetOutput() );
   estimator->SetMaximumIteration( 200 );
- 
+
   itk::Array< double > initialProportions(numberOfClasses);
   initialProportions[0] = 0.33;
   initialProportions[1] = 0.33;
   initialProportions[2] = 0.33;
- 
+
   std::cout << "Initial proportions: " << initialProportions << std::endl;
- 
+
   estimator->SetInitialProportions( initialProportions );
- 
+
   for ( unsigned int i = 0 ; i < numberOfClasses ; i++)
     {
     estimator->AddComponent( components[i]);
     }
   //itk::SimpleFilterWatcher watcher(estimator);
   estimator->Update();
- 
+
   // Output the results
   for ( unsigned int i = 0 ; i < numberOfClasses ; i++ )
     {
@@ -159,30 +160,30 @@ int main(int argc, char*argv[])
     // Outputs: // mean of dimension 1, mean of dimension 2, covariance(0,0), covariance(0,1), covariance(1,0), covariance(1,1)
     std::cout << "         " << estimator->GetProportions()[i] << std::endl;
     }
- 
+
   // Display the membership of each sample
   typedef itk::Statistics::SampleClassifierFilter< ImageToListSampleFilterType::ListSampleType > FilterType;
- 
+
   typedef itk::Statistics::MaximumDecisionRule2  DecisionRuleType;
   DecisionRuleType::Pointer    decisionRule = DecisionRuleType::New();
- 
+
   typedef FilterType::ClassLabelVectorObjectType               ClassLabelVectorObjectType;
   typedef FilterType::ClassLabelVectorType                     ClassLabelVectorType;
- 
+
   ClassLabelVectorObjectType::Pointer  classLabelsObject = ClassLabelVectorObjectType::New();
   ClassLabelVectorType & classLabelVector  = classLabelsObject->Get();
- 
+
   typedef FilterType::ClassLabelType        ClassLabelType;
- 
+
   ClassLabelType  class0 = 0;
   classLabelVector.push_back( class0 );
- 
+
   ClassLabelType  class1 = 1;
   classLabelVector.push_back( class1 );
- 
+
   ClassLabelType  class2 = 2;
   classLabelVector.push_back( class2 );
- 
+
   FilterType::Pointer sampleClassifierFilter = FilterType::New();
   sampleClassifierFilter->SetInput( imageToListSampleFilter->GetOutput() );
   sampleClassifierFilter->SetNumberOfClasses( numberOfClasses );
@@ -190,20 +191,20 @@ int main(int argc, char*argv[])
   sampleClassifierFilter->SetDecisionRule( decisionRule );
   sampleClassifierFilter->SetMembershipFunctions( estimator->GetOutput() );
   sampleClassifierFilter->Update();
- 
+
   const FilterType::MembershipSampleType* membershipSample = sampleClassifierFilter->GetOutput();
   FilterType::MembershipSampleType::ConstIterator iter = membershipSample->Begin();
- 
+
   while ( iter != membershipSample->End() )
     {
     std::cout << (int)iter.GetMeasurementVector()[0] << " " << (int)iter.GetMeasurementVector()[1] << " " << (int)iter.GetMeasurementVector()[2]
               << " : " << iter.GetClassLabel() << std::endl;
     ++iter;
     }
- 
+
   return EXIT_SUCCESS;
 }
- 
+
 void ControlledImage(ImageType::Pointer image)
 {
   // Create an image
@@ -211,36 +212,36 @@ void ControlledImage(ImageType::Pointer image)
   ImageType::IndexType start;
   start[0] = 0;
   start[1] = 0;
- 
+
   ImageType::SizeType size;
   size[0] = 10;
   size[1] = 10;
- 
+
   region.SetSize(size);
   region.SetIndex(start);
- 
+
   image->SetRegions(region);
   image->Allocate();
- 
+
   // Make a red and a green square
   itk::CovariantVector<unsigned char, 3> green;
   green[0] = 0;
   green[1] = 255;
   green[2] = 0;
- 
+
   itk::CovariantVector<unsigned char, 3> red;
   red[0] = 255;
   red[1] = 0;
   red[2] = 0;
- 
+
   itk::CovariantVector<unsigned char, 3> black;
   black[0] = 0;
   black[1] = 0;
   black[2] = 0;
- 
+
   itk::ImageRegionIterator<ImageType> imageIterator(image,region);
   imageIterator.GoToBegin();
- 
+
   while(!imageIterator.IsAtEnd())
     {
     if(imageIterator.GetIndex()[0] > 2 && imageIterator.GetIndex()[0] < 5 &&
@@ -259,9 +260,9 @@ void ControlledImage(ImageType::Pointer image)
       }
     ++imageIterator;
     }
- 
+
 }
- 
+
 void RandomImage(ImageType::Pointer image)
 {
   // Create an image
@@ -269,29 +270,32 @@ void RandomImage(ImageType::Pointer image)
   ImageType::IndexType start;
   start[0] = 0;
   start[1] = 0;
- 
+
   ImageType::SizeType size;
   size[0] = 10;
   size[1] = 10;
- 
+
   region.SetSize(size);
   region.SetIndex(start);
- 
+
   image->SetRegions(region);
   image->Allocate();
- 
+
   itk::ImageRegionIterator<ImageType> imageIterator(image,region);
   imageIterator.GoToBegin();
- 
+
+  vnl_random randomizer( 12 );
+
   while(!imageIterator.IsAtEnd())
     {
     // Get a random color
     itk::CovariantVector<unsigned char, 3> pixel;
-    pixel[0] = rand() * 255;
-    pixel[1] = rand() * 255;
-    pixel[2] = rand() * 255;
+    pixel[0] = static_cast< unsigned char >( randomizer.lrand32( 0, 255 ) );
+    pixel[1] = static_cast< unsigned char >( randomizer.lrand32( 0, 255 ) );
+    pixel[2] = static_cast< unsigned char >( randomizer.lrand32( 0, 255 ) );
     imageIterator.Set(pixel);
     ++imageIterator;
     }
- 
+
 }
+
