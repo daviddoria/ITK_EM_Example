@@ -8,3 +8,7 @@ INCLUDE(${ITK_USE_FILE})
 ADD_EXECUTABLE(ExpectationMaximizationMixtureModelEstimator_Image ExpectationMaximizationMixtureModelEstimator_Image.cxx)
 TARGET_LINK_LIBRARIES(ExpectationMaximizationMixtureModelEstimator_Image
 ITKBasicFilters ITKCommon ITKIO ITKStatistics)
+
+ADD_EXECUTABLE(Simple_Double Simple_Double.cxx)
+TARGET_LINK_LIBRARIES(Simple_Double
+ITKBasicFilters ITKCommon ITKIO ITKStatistics)
