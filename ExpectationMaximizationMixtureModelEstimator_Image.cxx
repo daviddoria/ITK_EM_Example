@@ -58,7 +58,7 @@ int main(int argc, char*argv[])
         }
       else
         {
-          params[3+counter] = 0; // off-diagonal
+        params[3+counter] = 0; // off-diagonal
         }
       counter++;
       }

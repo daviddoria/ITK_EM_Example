@@ -39,9 +39,22 @@ int main(int argc, char*argv[])
     {
     params[i] = 5.0; // mean of dimension i
     }
-  for(unsigned int i = 3; i < 12; i++)
+
+  unsigned int counter = 0;
+  for(unsigned int i = 0; i < 3; i++)
     {
-    params[i] = 5.0; // covariance
+    for(unsigned int j = 0; j < 3; j++)
+      {
+      if(i == j)
+        {
+        params[3+counter] = 5; // diagonal
+        }
+      else
+        {
+          params[3+counter] = 0; // off-diagonal
+        }
+      counter++;
+      }
     }
 
   initialParameters[0] = params;
