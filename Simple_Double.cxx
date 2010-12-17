@@ -63,20 +63,44 @@ int main(int argc, char*argv[])
   params[0] = 210.0;
   params[1] = 5.0;
   params[2] = 5.0;
-  for(unsigned int i = 3; i < 12; i++)
-    {
-    params[i] = 5.0; // covariance
-    }
+  counter = 0;
+  for(unsigned int i = 0; i < 3; i++)
+      {
+      for(unsigned int j = 0; j < 3; j++)
+        {
+        if(i == j)
+          {
+          params[3+counter] = 5; // diagonal
+          }
+        else
+          {
+            params[3+counter] = 0; // off-diagonal
+          }
+        counter++;
+        }
+      }
   initialParameters[1] = params;
 
   // Create the third set (for the third cluster/model) of initial parameters
   params[0] = 5.0;
   params[1] = 210.0;
   params[2] = 5.0;
-  for(unsigned int i = 3; i < 12; i++)
-    {
-    params[i] = 5.0; // covariance
-    }
+  counter = 0;
+  for(unsigned int i = 0; i < 3; i++)
+      {
+      for(unsigned int j = 0; j < 3; j++)
+        {
+        if(i == j)
+          {
+          params[3+counter] = 5; // diagonal
+          }
+        else
+          {
+            params[3+counter] = 0; // off-diagonal
+          }
+        counter++;
+        }
+      }
   initialParameters[2] = params;
 
   std::cout << "Initial parameters: " << std::endl;
